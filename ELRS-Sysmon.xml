@@ -1,0 +1,901 @@
+<!--
+												SysmonForLinux
+
+	Extended Linux Rule Set for Sysmon(ELRS-Sysmon)
+
+	Detection ruleset for Sysmon Linux
+
+	MIT License
+
+	Copyright (c) 2026 NightAsylum
+
+	Reference:https://github.com/NightAsylum/ELRS-Sysmon
+-->
+
+
+<Sysmon schemaversion="4.81">
+
+  <HashAlgorithms>md5,sha256</HashAlgorithms>
+  
+  <EventFiltering>
+  
+  
+
+  
+  
+  
+ 
+    <!-- Event ID 1 == ProcessCreate  Inclusions-->
+    <RuleGroup name="" groupRelation="or">
+	
+
+	 
+      <ProcessCreate onmatch="include">
+	    
+		
+	   <!-- Monitor sudo and su Executions   -->
+		
+	   <Rule name="Sudo and su Executions" groupRelation="and">
+          <Image condition="contains any">/sudo;/su</Image>
+        </Rule>
+		
+		
+		<!-- Monitor Executions from Temp Directories  -->
+		
+	   <Rule name="Monitor Executions from Temp Directories" groupRelation="and">
+          <Image condition="contains any">/tmp;/dev/shm/;/run/</Image>
+        </Rule>
+		
+		
+	   	   <!-- Monitor App Install and Uninstall   -->
+		
+	   <Rule name="Monitor App Install and Uninstall" groupRelation="and">
+          <Image condition="contains any">/apt;/dpkg;/dnf;/rpm;/snap;/yum</Image>
+		  <CommandLine condition="contains any">install;remove;purge;uninstall</CommandLine>
+        </Rule>
+		
+		<!-- File and Directory Permissions Modification: Linux and Mac Permissions -  T1222.002   -->
+		
+	   <Rule name="TechniqueID=T1222.002 ,TechniqueName=File and Directory Permissions Modification: Linux and Mac Permissions " groupRelation="and">
+          <Image condition="contains">/chattr</Image>
+		  <CommandLine condition="contains">-i</CommandLine>
+        </Rule>
+	  
+	  
+	    <!--  Application Layer Protocol: File Transfer Protocols    -T1071.002     -->
+		<Rule name="TechniqueID=T1071.002  ,TechniqueName=Application Layer Protocol: File Transfer Protocols " groupRelation="and">
+          <Image condition="end with">ftp</Image>
+        </Rule>
+	  
+	  
+	  
+	  <!-- Remote Services-T1021  -->
+	  
+        <Rule name="TechniqueID=T1021.001,TechniqueName=Remote Services: Remote Desktop Protocol " groupRelation="and">
+          <Image condition="contains any">/remmina;/krdc;/vinagre;/gnome-connections;/xrdp;/xfreerdp;/anydesk;/rustdesk</Image>
+        </Rule>
+		
+		
+		<Rule name="TechniqueID=T1021.004,TechniqueName=Remote Services: SSH" groupRelation="and">
+          <Image condition="end with">/ssh</Image>
+        </Rule>
+		
+		<Rule name="TechniqueID=T1021,TechniqueName=Remote Services" groupRelation="and">
+          <Image condition="end with">/telnet</Image>
+        </Rule>
+
+       <Rule name="TechniqueID=T1021.005,TechniqueName=Remote Services: VNC" groupRelation="and">
+          <Image condition="contains any">/vncviewer;/vncserver;/x11vnc</Image>
+        </Rule>
+		
+		
+		<!--  Event Triggered Execution: Unix Shell Configuration Modification     -T1546.004   -->
+	    <Rule name="TechniqueID=T1546.004 ,TechniqueName=Event Triggered Execution: Unix Shell Configuration Modification " groupRelation="and">
+		<Image condition="contains any">/nano;/vim;/vi;/mousepad;/sed</Image>
+		<CommandLine condition="contains any">/etc/profile.d;/etc/profile;/.bash_profile;/.bash_login;/.profile;/.bashrc;/.bash_logout</CommandLine>
+        </Rule>
+		
+	    <Rule name="TechniqueID=T1546.004 ,TechniqueName=Event Triggered Execution: Unix Shell Configuration Modification " groupRelation="and">
+		<Image condition="contains any">/nano;/vim;/vi;/mousepad;/sed</Image>
+		<CurrentDirectory condition="contains">/etc/profile.d</CurrentDirectory>
+        </Rule>
+		
+		
+		
+		
+		
+		<!-- Account Manipulation: SSH Authorized Keys  -T1098.004 -->
+		
+		<Rule name="TechniqueID=T1098.004 ,TechniqueName=Account Manipulation: SSH Authorized Keys" groupRelation="and">
+
+		 <Image condition="contains any">/nano;/vim;/mousepad;/sed;/vi</Image>
+		  <CommandLine condition="contains">/etc/ssh/sshd_config</CommandLine>
+        </Rule>
+
+	  <!--  Abuse Elevation Control Mechanism: Sudo and Sudo Caching(sudoers file)    -T1548.003   -->
+	    <Rule name="TechniqueID=T1548.003,TechniqueName=Abuse Elevation Control Mechanism: Sudo and Sudo Caching " groupRelation="and">
+		<Image condition="contains any">/nano;/vim;/vi;/mousepad;/sed</Image>
+		<CommandLine condition="contains">/etc/sudoers</CommandLine>
+        </Rule>
+		
+        <Rule name="TechniqueID=T1548.003,TechniqueName=Abuse Elevation Control Mechanism: Sudo and Sudo Caching " groupRelation="and">
+		<Image condition="contains">/visudo</Image>
+        </Rule>
+
+		<!-- Disable or Modify Tools -T1685  -->
+		
+		<Rule name="TechniqueID=T1685.004 ,TechniqueName=Disable or Modify Tools: Disable or Modify Linux Audit System Log" groupRelation="and">
+
+		 <Image condition="contains any">/rm;/nano;/vim;/vi;/mousepad;/sed;shred</Image>
+		  <CommandLine condition="contains any">/etc/audit;/sbin/auditd</CommandLine>
+        </Rule>
+		
+		<Rule name="TechniqueID=T1685.004 ,TechniqueName=Disable or Modify Tools: Disable or Modify Linux Audit System Log" groupRelation="and">
+			 <Image condition="contains any">/systemctl;/service;/svcadm</Image>
+			 <CommandLine condition="contains">auditd</CommandLine>
+		  		<CommandLine condition="contains any">stop;disable;kill;mask;reset-failed</CommandLine>
+        </Rule>
+		
+		
+		<Rule name="TechniqueID=T1685.006 ,TechniqueName=Disable or Modify Tools: Clear Linux or Mac System Logs" groupRelation="and">
+
+		  <Image condition="contains any">/ruby;/python;/perl;/unlink;/truncate;/rm;/shred;/nano;/vim;/vi;/mousepad;/sed</Image>
+		  <CommandLine condition="contains">/var/log/</CommandLine>
+        </Rule>
+		
+		<Rule name="TechniqueID=T1685.006 ,TechniqueName=Disable or Modify Tools: Clear Linux or Mac System Logs" groupRelation="and">
+
+		 <Image condition="contains any">/ruby;/python;/perl;/unlink;/truncate;/rm;/shred;/nano;/vim;/vi;/mousepad;/sed</Image>
+		  <CurrentDirectory condition="is">/var/log</CurrentDirectory>
+		  <CommandLine condition="contains any">*;log;gz;sysmon;btmp;wtmp;journal;messages;httpd;secure</CommandLine>
+        </Rule>
+		
+		<!-- Disable or Modify System Firewall -T1686  -->
+		<Rule name="TechniqueID=T1686 ,TechniqueName=Disable or Modify System Firewall" groupRelation="and">
+
+		 <Image condition="contains any">/iptables;</Image>
+        <CommandLine condition="contains all">--dport;ACCEPT;tcp;/dev/null</CommandLine>
+        </Rule>
+		
+		
+		<Rule name="TechniqueID=T1686 ,TechniqueName=Disable or Modify System Firewall" groupRelation="and">
+
+		 <Image condition="contains any">/systemctl;/service;/svcadm</Image>
+        <CommandLine condition="contains any">firewalld;ufw;nftables;iptables</CommandLine>
+		<CommandLine condition="contains any">stop;disable;kill;mask;reset-failed</CommandLine>
+        </Rule>
+		
+		
+		 <!-- Defense Impairment    -TA0112 -->
+	   <Rule name="TechniqueID=TA0112 ,TechniqueName=Defense Impairment  " groupRelation="and">
+
+	   <Image condition="contains any">/usr/bin/kill;/usr/bin/pkill</Image>
+      </Rule>
+	  
+		
+		
+		<!-- Service Stop  -T1489  -->
+		
+	    <Rule name="TechniqueID=T1489 ,TechniqueName=Service Stop" groupRelation="and">
+			 <Image condition="contains any">/systemctl;/service;/svcadm</Image>
+		  
+		    <CommandLine condition="contains any">ssh;sshd;rsyslog;systemd-journald;systemd-resolved;cron;crond;docker;containerd;kubelet;libvirtd;httpd;apache2;nginx;mysqld;mysql;mariadb;postgresql;redis;redis-server;keepalived;smb;smbd;nfs-server;openvpn</CommandLine>
+            <CommandLine condition="contains any">stop;disable;kill;mask;reset-failed</CommandLine>
+		</Rule>
+		
+		
+		
+		<!-- Indicator Removal -T1070   -->
+		
+		<Rule name="TechniqueID=T1070.003  ,TechniqueName=Indicator Removal: Clear Command History " groupRelation="or"> <!-- This only works if these commands are ran using something like sh -c -->
+	
+		<CommandLine condition="contains any">history -w;history -c;history -d;unset HISTFILE</CommandLine>
+		</Rule>
+		
+		 <Rule name="TechniqueID=T1070.006,TechniqueName=Indicator Removal on Host: Timestomp" groupRelation="and">
+          <Image condition="end with">/bin/touch</Image>
+          <CommandLine condition="contains any">\r;-\r;-/r;/r;-r;--reference;-\-re\ference;\t;-\t;/t;-/t;-t;-mtime;-atime;--date;\d;-\d;/d;-/d;-d</CommandLine>
+        </Rule>
+		
+		<Rule name="TechniqueID=T1070.006,TechniqueName=Indicator Removal on Host: Timestomp" groupRelation="and">
+          <Image condition="is">/usr/sbin/debugfs</Image>
+          <CommandLine condition="contains any">mtime;ctime;ctime_extra</CommandLine>
+        </Rule>
+		
+		
+		<!-- Obfuscated Files or Information  -T1027   -->
+
+		<Rule name="TechniqueID=T1027.001,TechniqueName=Obfuscated Files or Information: Binary Padding" groupRelation="and">
+          <Image condition="is">/bin/dd</Image>
+          <CommandLine condition="contains all">dd;if=</CommandLine>
+        </Rule>
+		
+		<Rule name="TechniqueID=T1027.013 ,TechniqueName=Obfuscated Files or Information: Encrypted/Encoded File " groupRelation="and">
+          <Image condition="is">base64</Image>
+        </Rule>
+		
+		<Rule name="TechniqueID=T1027.015 ,TechniqueName=Obfuscated Files or Information: Compression " groupRelation="and">
+          <Image condition="contains any">/unzip;/tar;/7z;/unrar</Image>
+          <CommandLine condition="contains all">-xf;-xzf;-xjf;-xJf; x ;-d</CommandLine>
+        </Rule>
+		
+		
+			<!--    Network Sniffing   -T1040    -->
+	
+	    <Rule name="TechniqueID=T1040 ,TechniqueName=Network Sniffing" groupRelation="and">
+          <Image condition="contains any">/tcpdump;/tshark;/dumpcap;/wireshark;/ngrep;/ettercap;/dsniff;/netsniff-ng;/snort;/suricata;/zeek;/bro;/mitmproxy;/ss;/iftop;/iptraf-ng;/nload;/bmon</Image>
+		  <LogonId condition="is">0</LogonId>
+        </Rule>
+		
+		
+		<!-- System Owner/User Discovery  -T1033    -->
+		
+        <Rule name="TechniqueID=T1033,TechniqueName=System Owner/User Discovery" groupRelation="or">
+		  <Image condition="contains any">/usr/bin/who;/usr/bin/whoami</Image>
+		  <Image condition="is">/usr/bin/w</Image>
+          <CommandLine condition="contains">/var/run/utmp</CommandLine>
+          <CommandLine condition="contains">/var/log/btmp</CommandLine>
+          <CommandLine condition="contains">/var/log/wtmp</CommandLine>
+		  
+
+        </Rule>
+		
+		<!--  System Network Configuration Discovery  -T1016   -->
+		
+	    <Rule name="TechniqueID=T1016,TechniqueName=System Network Configuration Discovery" groupRelation="and">
+		  <Image condition="contains any">/arp;/ifconfig;/ip;/netstat;/firewall-cmd;/ufw;/iptables;/ss;/route</Image>
+
+        </Rule>
+		
+		
+		<!--  Device Driver Discovery  -T1652    -->
+		
+	    <Rule name="TechniqueID=T1652,TechniqueName=Device Driver Discovery" groupRelation="or">
+		  <Image condition="contains any">/lsmod;/modinfo</Image>
+		  <CommandLine condition="contains">/kernel/drivers -name "*.ko*"</CommandLine>
+
+        </Rule>
+		
+				<!-- File and Directory Discovery  -T1083    -->
+		
+	    <Rule name="TechniqueID=T1083,TechniqueName=File and Directory Discovery" groupRelation="and">
+		  <Image condition="contains any">/find;/grep</Image>
+		  <CommandLine condition="contains any">*.tif;*.tiff;*.gif;*.jpeg;*.jpg;*.jif;*.jfif;*.jp2;*.jpx;*.j2k;*.j2c;*.fpx;*.pcd;*.png;*.flv;*.pdf;*.mp4;*.mp3;*.gifv;*.avi;*.mov;*.mpeg;*.wav;*.doc;*.docx;*.xls;*.xlsx;*.svg</CommandLine>
+
+        </Rule>
+		
+		<!-- Software Discovery   -T1518     -->
+		
+	    <Rule name="TechniqueID=T1518 ,TechniqueName=Software Discovery " groupRelation="and">
+		  <Image condition="contains any">/dpkg;/rpm</Image>
+		  <CommandLine condition="contains any">-l;-qa</CommandLine>
+		 <Image condition="excludes any">/dpkg-divert;/usr/bin/dpkg-deb;/usr/bin/dpkg-split;/usr/bin/dpkg-trigger</Image>
+		 <CommandLine condition="excludes">--compare-versions</CommandLine>
+
+        </Rule>
+		
+		<!--  Account Discovery -T1087  -->
+		
+		<Rule name="TechniqueID=T1087.001,TechniqueName=Account Discovery: Local Account" groupRelation="or">
+          <CommandLine condition="contains">/etc/passwd</CommandLine>
+          <CommandLine condition="contains">/etc/sudoers</CommandLine> 
+		  <CommandLine condition="contains">/etc/group</CommandLine>
+		  <CommandLine condition="contains">/etc/spwd.db</CommandLine>
+		  <CommandLine condition="contains">/etc/pwd.db</CommandLine>
+		  <CommandLine condition="contains">/etc/master.passwd</CommandLine>
+		  <Image condition="end with">/usr/bin/loginctl</Image>
+		  <Image condition="end with">/usr/bin/lastlog</Image>
+		  <Image condition="end with">/usr/bin/getent</Image>
+        </Rule>
+		
+		<Rule name="TechniqueID=T1087.001,TechniqueName=Account Discovery: Local Account" groupRelation="and">
+		  <Image condition="contains any">/ls;/tree</Image>
+		  <CommandLine condition="contains">/home</CommandLine>
+
+        </Rule>
+		
+		<Rule name="TechniqueID=T1087.001,TechniqueName=Account Discovery: Local Account" groupRelation="and">
+		  <Image condition="contains any">/ls;/tree</Image>
+		  <CurrentDirectory condition="is">/home</CurrentDirectory>
+
+        </Rule>
+		
+		<!--  Create Account  -T1136   -->
+		
+		<Rule name="TechniqueID=T1136.001,TechniqueName=Create Account: Local Account" groupRelation="or">
+          <Image condition="end with">useradd</Image>
+          <Image condition="end with">adduser</Image>
+		  
+        </Rule>
+		   
+		<!--  Account Manipulation: Additional Local or Domain Groups   -T1098.007    -->
+		<Rule name="TechniqueID=T1098.007 ,TechniqueName=Account Manipulation: Additional Local or Domain Groups " groupRelation="or">
+          <Image condition="end with">groupmod</Image>
+          <Image condition="end with">addgroup</Image>
+          <Image condition="end with">groupadd</Image>
+		  <Image condition="end with">usermod</Image>
+        </Rule>
+		
+		
+		
+		
+		
+		<!--  Scheduled Task/Job  -T1053   -->
+		
+		
+        <Rule name="TechniqueID=T1053.003,TechniqueName=Scheduled Task/Job: Cron" groupRelation="or">
+          <Image condition="end with">/crontab</Image>
+        </Rule>
+		
+		<Rule name="TechniqueID=T1053.003,TechniqueName=Scheduled Task/Job: Cron " groupRelation="and">
+          <CommandLine condition="contains any">/etc/anacrontab;/etc/cron.d;/etc/crontab;/etc/cron;/cron/crontab;/var/spool/cron/</CommandLine>
+          <Image condition="excludes any">/ls;/dir;/find;/grep;/cat;/usr/bin/run-parts</Image>
+		  <ParentImage condition="excludes">/usr/bin/run-parts</ParentImage>
+		  <CommandLine condition="excludes">run-parts --report</CommandLine>
+		  
+        </Rule>
+		
+		
+		<Rule name="TechniqueID=T1053.003,TechniqueName=Scheduled Task/Job: Cron " groupRelation="and">
+          <CurrentDirectory condition="contains any">/etc/cron.d;/var/spool/cron;/etc/cron</CurrentDirectory>
+          <Image condition="excludes any">/ls;/dir;/find;/grep;/cat;/usr/bin/run-parts</Image>
+		  <CommandLine condition="excludes">run-parts --report</CommandLine>
+        </Rule>
+		
+		
+		<Rule name="TechniqueID=T1053.006,TechniqueName=Scheduled Task/Job: Systemd Timers" groupRelation="and">
+          <CommandLine condition="contains any">/etc/systemd/system;/usr/lib/systemd/system;/run/systemd/system;/lib/systemd/system;/systemd/user</CommandLine>
+		  <CommandLine condition="contains">.timer</CommandLine>
+          <Image condition="excludes any">/ls;/dir;/find;/grep;/cat;/tree</Image>
+        </Rule>
+		
+		<Rule name="TechniqueID=T1053.006,TechniqueName=Scheduled Task/Job: Systemd Timers " groupRelation="and">
+          <CurrentDirectory condition="contains any">/etc/systemd/system;/usr/lib/systemd/system;/run/systemd/system;/lib/systemd/system;/systemd/user</CurrentDirectory>
+		  <CommandLine condition="contains">.timer</CommandLine>
+          <Image condition="excludes any">/ls;/dir;/find;/grep;/cat;/tree</Image>
+		  
+        </Rule>
+		
+		
+		<!--  Create or Modify System Process  -T1543  -->
+		
+		<Rule name="TechniqueID=T1543.002,TechniqueName=Create or Modify System Process: Systemd Service" groupRelation="and">
+          <CommandLine condition="contains any">/etc/systemd/system;/usr/lib/systemd/system;/run/systemd/system;/lib/systemd/system;/systemd/user</CommandLine>
+          <Image condition="excludes any">/ls;/dir;/find;/grep;/cat</Image>
+        </Rule> 
+		
+		<Rule name="TechniqueID=T1543.002,TechniqueName=Create or Modify System Process: Systemd Service" groupRelation="and">
+          <CurrentDirectory condition="contains any">/etc/systemd/system;/usr/lib/systemd/system;/run/systemd/system;/lib/systemd/system;/systemd/user</CurrentDirectory>
+		  <CommandLine condition="contains">.service</CommandLine>
+          <Image condition="excludes any">/ls;/dir</Image>
+		  
+		  
+        </Rule> 
+		
+
+		<!--  Ingress Tool Transfer   -T1105    -->
+		
+        <Rule name="TechniqueID=T1105,TechniqueName=Ingress Tool Transfer" groupRelation="or">
+          <Image condition="end with">wget</Image>
+          <Image condition="end with">curl</Image>
+          <Image condition="end with">ftpget</Image>
+          <Image condition="end with">tftp</Image>
+		  <Image condition="end with">sftp</Image>
+		  <Image condition="end with">lftp</Image>
+          <Image condition="end with">lwp-download</Image>
+		  <Image condition="end with">nc</Image>
+	      <Image condition="end with">scp</Image>
+	      <Image condition="end with">ssh</Image>
+	      <Image condition="end with">gdb</Image>
+		  <Image condition="end with">finger</Image>
+		  <Image condition="end with">rsync</Image>
+		  <Image condition="end with">git</Image>
+		  <Image condition="end with">socat</Image>
+        </Rule>
+		
+		
+        
+		
+		
+		<!-- Clipboard Data   -T1115      -->
+		
+	    <Rule name="TechniqueID=T1115 ,TechniqueName=Clipboard Data" groupRelation="or">
+		  <Image condition="contains any">/xclip;/xsel;/wl-copy</Image>
+
+        </Rule>
+		
+	<!--   Audio Capture    -T1123    -->
+		
+		<Rule name="TechniqueID=T1123,TechniqueName=Audio Capture" groupRelation="and">
+          <Image condition="contains">/bin/aplay</Image>
+          <CommandLine condition="contains">arecord</CommandLine>
+        </Rule>
+		
+		
+
+		
+		<!--   Server Software Component: Web Shell   -T1505.003    -->
+		
+		<Rule name="TechniqueID=T1505.003,TechniqueName=Server Software Component: Web Shell" groupRelation="and">
+          <Image condition="contains any">whoami;ifconfig;/usr/bin/ip;/bin/uname</Image>
+          <ParentImage condition="contains any">httpd;lighttpd;nginx;apache2;node;dash</ParentImage>
+        </Rule>
+		
+		
+	<!--    Data Destruction   -T1485   -->
+		
+        <Rule name="TechniqueID=T1485,TechniqueName=Data Destruction" groupRelation="and">
+          <Image condition="is">/usr/bin/dd</Image>
+          <CommandLine condition="contains all">dd;of=;if=</CommandLine>
+          <CommandLine condition="contains any">if=/dev/zero;if=/dev/null</CommandLine>
+        </Rule>
+		
+		<Rule name="TechniqueID=T1485,TechniqueName=Data Destruction" groupRelation="and">
+          <Image condition="is">/usr/bin/shred</Image>
+          <CommandLine condition="contains any">-n;-u;-z;-z</CommandLine>
+        </Rule>
+		
+        <Rule name="TechniqueID=T1485,TechniqueName=Data Destruction" groupRelation="and">
+          <Image condition="is">/usr/bin/rm</Image>
+          <CommandLine condition="contains any">-rf;-fr</CommandLine>
+          <CommandLine condition="contains any">/boot;/var/log;/etc;/dev;/home</CommandLine>
+        </Rule>
+	
+	
+	    <Rule name="TechniqueID=T1485,TechniqueName=Data Destruction" groupRelation="and">
+          <Image condition="is">/usr/bin/rm</Image>
+          <CommandLine condition="contains any">-rf;-fr</CommandLine>
+          <CommandLine condition="contains">--no-preserve-root</CommandLine>
+        </Rule>
+	
+	<!--    Boot or Logon Autostart Execution: Kernel Modules and Extensions    -T1547.006    -->
+	
+	    <Rule name="TechniqueID=T1547.006 ,TechniqueName=Boot or Logon Autostart Execution: Kernel Modules and Extensions " groupRelation="and">
+          <Image condition="contains any">/insmod;/modprobe;/rmmod</Image>
+        </Rule>
+	
+			<!--   Abuse Elevation Control Mechanism: Setuid and Setgid    -T1548.001  -->
+
+        <Rule name="TechniqueID=T1548.001,TechniqueName=Abuse Elevation Control Mechanism: Setuid and Setgid" groupRelation="or">
+          <Image condition="end with">chmod</Image>
+          <Image condition="end with">chown</Image>
+          <Image condition="end with">fchmod</Image>
+          <Image condition="end with">fchmodat</Image>
+          <Image condition="end with">fchown</Image>
+          <Image condition="end with">fchownat</Image>
+          <Image condition="end with">fremovexattr</Image>
+          <Image condition="end with">fsetxattr</Image>
+          <Image condition="end with">lchown</Image>
+          <Image condition="end with">lremovexattr</Image>
+          <Image condition="end with">lsetxattr</Image>
+          <Image condition="end with">removexattr</Image>
+          <Image condition="end with">setuid</Image>
+          <Image condition="end with">setgid</Image>
+          <Image condition="end with">setreuid</Image>
+          <Image condition="end with">setregid</Image>
+        </Rule>
+
+
+			<!--    Credentials from Password Stores     -T1555   -->
+
+		    <Rule name="TechniqueID=T1555,TechniqueName=Credentials from Password Stores " groupRelation="and">
+      <CommandLine condition="contains any">password;opasswd;pass;secret;creds;credentials;secrets;passw;pwd;/etc/shadow;org.gnome.crypto.cache;.kdbx;KeePass;.enforced;.lpdb;.opvault;.agilekeychain;.dashlane;.rfx;passbolt;.spdb;StickyPassword;.walletx;enpass;.kdb</CommandLine>
+	  <Image condition="contains any">/cat;/less;/more;/head;/tail;/grep;/egrep;/fgrep;/rg;/find;/locate;/fd;/awk;/sed;/strings;/vim;/vi;/nano;/mousepad</Image>
+    </Rule>
+		        
+
+
+		<!--    Boot or Logon Initialization Scripts      -T1037   -->
+		
+		    <Rule name="TechniqueID=T1037.004,TechniqueName=Boot or Logon Initialization Scripts: RC Scripts" groupRelation="or">
+        <CommandLine condition="contains">/etc/rc.local</CommandLine>
+		<CommandLine condition="contains">/etc/rc.d/</CommandLine>
+    </Rule>
+	
+		
+		    <Rule name="TechniqueID=T1037,TechniqueName=Boot or Logon Initialization Scripts: init.d" groupRelation="or">
+          <CommandLine condition="contains">/etc/init/</CommandLine>
+          <CommandLine condition="contains">/etc/init.d/</CommandLine>
+		  <CommandLine condition="contains">/sbin/init.d/</CommandLine>
+		  
+         
+        </Rule>
+		
+		
+	       <Rule name="TechniqueID=T1037,TechniqueName=Boot or Logon Initialization Scripts: motd" groupRelation="or">
+        <CommandLine condition="contains">/etc/update-motd.d/</CommandLine>
+          </Rule>
+	
+	
+		   <Rule name="TechniqueID=T1037,TechniqueName=Boot or Logon Initialization Scripts: systemd-generators" groupRelation="or">
+        <CommandLine condition="contains any">/etc/systemd/system-generators/;/usr/local/lib/systemd/system-generators/;/lib/systemd/system-generators/;/usr/lib/systemd/system-generators/;/etc/systemd/user-generators/;/usr/local/lib/systemd/user-generators/;/usr/lib/systemd/user-generators/</CommandLine>
+
+       <CurrentDirectory condition="contains any">/etc/systemd/system-generators/;/usr/local/lib/systemd/system-generators/;/lib/systemd/system-generators/;/usr/lib/systemd/system-generators/;/etc/systemd/user-generators/;/usr/local/lib/systemd/user-generators/;/usr/lib/systemd/user-generators/</CurrentDirectory>
+    </Rule>
+	
+	
+	
+
+	
+			
+        <Rule name="TechniqueID=T1203,TechniqueName=Exploitation for Client Execution" groupRelation="and">
+          <User condition="is">root</User>
+          <LogonId condition="is">0</LogonId>
+          <CurrentDirectory condition="is">/var/opt/microsoft/scx/tmp</CurrentDirectory>
+          <CommandLine condition="contains">/bin/sh</CommandLine>
+        </Rule>
+		
+	
+
+		
+      </ProcessCreate>
+    </RuleGroup>
+	
+
+    <!-- Event ID 1 == ProcessCreate  Exclusions-->
+
+  
+  <ProcessCreate onmatch="exclude">
+    
+    <Image condition="end with">/bin/ls</Image>
+    <Image condition="end with">/bin/pwd</Image>
+    <Image condition="end with">/usr/bin/top</Image>
+    <Image condition="end with">/usr/bin/uptime</Image>
+    <Image condition="end with">/usr/bin/ps</Image>
+    <Image condition="end with">/bin/kill</Image>
+    <Image condition="end with">/usr/bin/vmware-toolbox-cmd</Image>
+  
+    <!-- Exclude system initialization processes that might show up during normal operation -->
+    <Image condition="end with">/sbin/init</Image>
+    <Image condition="end with">/sbin/reboot</Image>
+    <Image condition="end with">/sbin/shutdown</Image>
+    <Image condition="end with">/usr/sbin/cron</Image>
+    <Image condition="end with">/usr/sbin/sshd</Image>
+    <Image condition="end with">/usr/sbin/systemd</Image>
+    <!-- Exclude log rotation or background processes -->
+    <Image condition="end with">/usr/sbin/logrotate</Image>
+    <Image condition="end with">/usr/sbin/fstrim</Image>
+    <Image condition="end with">/usr/sbin/rsyslogd</Image>
+</ProcessCreate>
+
+
+
+
+
+	
+	
+	
+    <!-- Event ID 3 == NetworkConnect Detected -->
+    <RuleGroup name="" groupRelation="or">
+	<!-- We are using an inclusion base for detection, but Exclusions might be more beneficial-->
+      <NetworkConnect onmatch="include">
+	  
+	  
+	  	  	<!-- Monitor Python & Perl & Ruby  -->
+	  
+        <Rule name="Monitor Python and Perl and Ruby" groupRelation="and">
+          <Image condition="contains any">/python;/perl;/ruby</Image>
+        </Rule>
+		
+		
+			 <!-- Monitor Apps connecting from /home and /tmp -->
+	  
+        <Rule name="App Connections from /home and /tmp" groupRelation="and">
+          <Image condition="contains any">/home;/tmp</Image>
+        </Rule>
+	  
+	  
+	  	  <!--  Application Layer Protocol: File Transfer Protocols    -T1071.002     -->
+		<Rule name="TechniqueID=T1071.002  ,TechniqueName=Application Layer Protocol: File Transfer Protocols " groupRelation="and">
+          <Image condition="end with">ftp</Image>
+        </Rule>
+	  
+	  	  <!-- Remote Services-T1021  -->
+	  
+        <Rule name="TechniqueID=T1021.001,TechniqueName=Remote Services: Remote Desktop Protocol " groupRelation="and">
+          <Image condition="contains any">/remmina;/krdc;/vinagre;/gnome-connections;/xrdp;/xfreerdp;/anydesk;/rustdesk</Image>
+        </Rule>
+		
+		
+		<Rule name="TechniqueID=T1021.004,TechniqueName=Remote Services: SSH" groupRelation="and">
+          <Image condition="end with">/ssh</Image>
+        </Rule>
+		
+		<Rule name="TechniqueID=T1021,TechniqueName=Remote Services" groupRelation="and">
+          <Image condition="end with">/telnet</Image>
+        </Rule>
+
+       <Rule name="TechniqueID=T1021.005,TechniqueName=Remote Services: VNC" groupRelation="and">
+          <Image condition="contains any">/vncviewer;/vncserver;/x11vnc</Image>
+        </Rule>
+	  
+	  <!--  Ingress Tool Transfer   -T1105    -->
+	  
+        <Rule name="TechniqueID=T1105,TechniqueName=Ingress Tool Transfer" groupRelation="or">
+          <Image condition="end with">wget</Image>
+          <Image condition="end with">curl</Image>
+          <Image condition="end with">ftpget</Image>
+          <Image condition="end with">tftp</Image>
+		  <Image condition="end with">sftp</Image>
+		  <Image condition="end with">lftp</Image>
+          <Image condition="end with">lwp-download</Image>
+		  <Image condition="end with">nc</Image>
+	      <Image condition="end with">scp</Image>
+	      <Image condition="end with">ssh</Image>
+	      <Image condition="end with">gdb</Image>
+		  <Image condition="end with">finger</Image>
+		  <Image condition="end with">rsync</Image>
+		  <Image condition="end with">git</Image>
+		  <Image condition="end with">socat</Image>
+        </Rule>
+      </NetworkConnect>
+    </RuleGroup>
+	
+	
+    <!-- Event ID 5 == ProcessTerminate -->
+    <RuleGroup name="" groupRelation="or">
+      <ProcessTerminate onmatch="include" />
+    </RuleGroup>
+	
+	
+	
+    <!-- Event ID 9 == RawAccessRead -->
+    <RuleGroup name="" groupRelation="or">
+      <RawAccessRead onmatch="include" />
+    </RuleGroup>
+	
+	
+	
+	<!-- Event ID 10 == ProcessAccess -->
+    <RuleGroup name="" groupRelation="or">
+      <ProcessAccess onmatch="include">
+	  
+	    <Rule name="ProcessAccess From Unusual Locations" groupRelation="or">
+        <SourceImage condition="contains any">/home;/root;/tmp/;/dev/shm/;/run/user/;/usr/local/bin/;/opt/</SourceImage>
+    </Rule>
+	
+		<Rule name="ProcessAccess From Important Programs" groupRelation="or">
+        <SourceImage condition="contains any">/usr/bin/ltrace;/usr/bin/strace;/usr/bin/gdb;/python;/perl;/ruby;/php</SourceImage>
+    </Rule>
+	
+	
+		<Rule name="ProcessAccess To Important Programs" groupRelation="or">
+        <TargetImage condition="contains any">/usr/bin/sshd;/usr/sbin/sshd;/usr/bin/sudo;/usr/bin/su;/usr/lib/systemd/systemd;/usr/bin/polkit-agent-helper-1;/usr/lib/polkit-1/polkit-agent-helper-1;/usr/bin/passwd;/usr/bin/gpasswd;/usr/bin/chfn;/usr/bin/chsh;/usr/bin/login</TargetImage>
+    </Rule>
+	
+	
+	</ProcessAccess>
+	  
+    </RuleGroup>
+	
+	
+	
+    <!-- Event ID 11 == FileCreate -->
+    <RuleGroup name="" groupRelation="or">
+      <FileCreate onmatch="include">
+	  
+	  <!--  Monitor file creation at /home & /root directory    -->
+	  
+	  	<Rule name="Monitor /home and /root Directory" groupRelation="or">
+        <TargetFilename condition="contains">/home;/root</TargetFilename>
+    </Rule>
+	  
+	  
+	 <!--  Hide Artifacts: Hidden Files and Directories   -T1564.001    -->
+	    <Rule name="TechniqueID=T1564.001,TechniqueName=Hide Artifacts: Hidden Files and Directories " groupRelation="and">
+		<TargetFilename condition="contains">/.</TargetFilename>
+		<Image condition="excludes any">/usr/bin/apt;/usr/lib/systemd/systemd-logind;/usr/lib/systemd/systemd-journald;/usr/bin/dpkg;/usr/bin/udevadm;/usr/bin/xauth;/usr/bin/less</Image>
+		<TargetFilename condition="excludes">/.viminfo;.swp;.tmp</TargetFilename>
+        </Rule>
+		
+		 <!--  Hide Artifacts: Hidden Files and Directories   -T1564.001    -->
+	    <Rule name="TechniqueID=T1564.001,TechniqueName=Hide Artifacts: Hidden Files and Directories " groupRelation="and">
+		<TargetFilename condition="end with">/ </TargetFilename>
+
+        </Rule>
+	  
+	  
+	  <!--  Abuse Elevation Control Mechanism: Sudo and Sudo Caching(sudoers file)    -T1548.003   -->
+	    <Rule name="TechniqueID=T1548.003,TechniqueName=Abuse Elevation Control Mechanism: Sudo and Sudo Caching " groupRelation="or">
+		<TargetFilename condition="contains">sudoers.tmp</TargetFilename>
+        </Rule>
+		
+	  <!--  Event Triggered Execution: Unix Shell Configuration Modification     -T1546.004   -->
+	    <Rule name="TechniqueID=T1546.004 ,TechniqueName=Event Triggered Execution: Unix Shell Configuration Modification " groupRelation="or">
+		<TargetFilename condition="contains">/etc/profile.d</TargetFilename>
+        </Rule>
+	  
+		<!--    Boot or Logon Autostart Execution: Kernel Modules and Extensions    -T1547.006    -->
+	
+	    <Rule name="TechniqueID=T1547.006 ,TechniqueName=Boot or Logon Autostart Execution: Kernel Modules and Extensions " groupRelation="and">
+          <TargetFilename condition="contains any">/lib/modules;/kernel/drivers/</TargetFilename>
+		  <TargetFilename condition="contains">.ko</TargetFilename>
+        </Rule>
+		
+	  <!--  Scheduled Task/Job  -T1053   -->
+
+        <Rule name="TechniqueID=T1053.003,TechniqueName=Scheduled Task/Job: Cron" groupRelation="or">
+          <TargetFilename condition="is">/etc/cron.allow</TargetFilename>
+          <TargetFilename condition="is">/etc/cron.deny</TargetFilename>
+          <TargetFilename condition="is">/etc/crontab</TargetFilename>
+		  <TargetFilename condition="begin with">/etc/cron</TargetFilename>
+          <TargetFilename condition="begin with">/etc/cron.d/</TargetFilename>
+          <TargetFilename condition="begin with">/etc/cron.daily/</TargetFilename>
+          <TargetFilename condition="begin with">/etc/cron.hourly/</TargetFilename>
+          <TargetFilename condition="begin with">/etc/cron.monthly/</TargetFilename>
+          <TargetFilename condition="begin with">/etc/cron.weekly/</TargetFilename>
+          <TargetFilename condition="begin with">/var/spool/cron/</TargetFilename>
+        </Rule>
+		
+	   <Rule name="TechniqueID=T1053.006,TechniqueName=Scheduled Task/Job: Systemd Timers " groupRelation="and">
+          <TargetFilename condition="contains any">/etc/systemd/system;/usr/lib/systemd/system;/run/systemd/system;/lib/systemd/system;/systemd/user</TargetFilename>
+          <TargetFilename condition="contains">.timer</TargetFilename>
+
+        </Rule>
+		
+		
+ 	  <!--  Ingress Tool Transfer   -T1105    -->
+	  
+        <Rule name="TechniqueID=T1105,TechniqueName=Ingress Tool Transfer" groupRelation="or">
+          <Image condition="end with">wget</Image>
+          <Image condition="end with">curl</Image>
+          <Image condition="end with">ftpget</Image>
+          <Image condition="end with">tftp</Image>
+		  <Image condition="end with">sftp</Image>
+		  <Image condition="end with">lftp</Image>
+          <Image condition="end with">lwp-download</Image>
+		  <Image condition="end with">nc</Image>
+	      <Image condition="end with">scp</Image>
+	      <Image condition="end with">ssh</Image>
+	      <Image condition="end with">gdb</Image>
+		  <Image condition="end with">finger</Image>
+		  <Image condition="end with">rsync</Image>
+		  <Image condition="end with">git</Image>
+		  <Image condition="end with">socat</Image>
+        </Rule>
+		
+		
+		<!--  Create or Modify System Process  -T1543  -->
+		
+        <Rule name="TechniqueID=T1543.002,TechniqueName=Create or Modify System Process: Systemd Service" groupRelation="or">
+          <TargetFilename condition="contains">/etc/systemd/system</TargetFilename>
+          <TargetFilename condition="contains">/usr/lib/systemd/system</TargetFilename>
+          <TargetFilename condition="contains">/run/systemd/system</TargetFilename>
+		  <TargetFilename condition="contains">/lib/systemd/system</TargetFilename>
+          <TargetFilename condition="contains">/systemd/user/</TargetFilename>
+		  <TargetFilename condition="contains">/.config/systemd/</TargetFilename>
+		  <TargetFilename condition="contains">/.local/share/systemd/</TargetFilename>
+		  <TargetFilename condition="contains">/usr/lib/systemd/user</TargetFilename>
+		  <TargetFilename condition="contains">/etc/systemd/user</TargetFilename>
+		  <TargetFilename condition="contains">/lib/systemd/user</TargetFilename>
+		  <TargetFilename condition="contains">/run/systemd/user</TargetFilename>
+        </Rule>
+		
+
+		<!--  Create Account  -T1136   -->
+		
+		<Rule name="TechniqueID=T1136.001,TechniqueName=Create Account: Local Account" groupRelation="or">
+          <TargetFilename condition="contains">/etc/passwd</TargetFilename>
+          <TargetFilename condition="contains">/etc/shadow</TargetFilename>
+        </Rule>
+		
+		<!--  Account Manipulation: Additional Local or Domain Groups   -T1098.007    -->
+		
+        <Rule name="TechniqueID=T1098.007,TechniqueName=Account Manipulation: Additional Local or Domain Groups " groupRelation="or">
+          <TargetFilename condition="contains">/etc/group</TargetFilename>
+          <TargetFilename condition="contains">/etc/gshadow</TargetFilename>
+        </Rule>
+		
+		<!-- Account Manipulation: SSH Authorized Keys  -T1098.004 -->
+		
+	    <Rule name="TechniqueID=T1098.004,TechniqueName=Account Manipulation: SSH Authorized Keys" groupRelation="or">
+           <TargetFilename condition="contains">/authorized_keys</TargetFilename>
+          <TargetFilename condition="contains">/.ssh</TargetFilename>
+		  
+        </Rule>
+		
+		
+		<!--    Boot or Logon Initialization Scripts      -T1037   -->
+		
+        <Rule name="TechniqueID=T1037.004,TechniqueName=Boot or Logon Initialization Scripts: RC Scripts" groupRelation="or">
+           <TargetFilename condition="is">/etc/rc.local</TargetFilename>
+		  <TargetFilename condition="begin with">/etc/rc.d/</TargetFilename>
+         </Rule>
+	
+	  	<Rule name="TechniqueID=T1037,TechniqueName=Boot or Logon Initialization Scripts: init.d" groupRelation="or">
+        <TargetFilename condition="contains">/etc/init/</TargetFilename>
+           <TargetFilename condition="contains">/etc/init.d</TargetFilename>
+		   <TargetFilename condition="contains">/sbin/init.d/</TargetFilename>
+          
+        </Rule>
+		
+		<Rule name="TechniqueID=T1037,TechniqueName=Boot or Logon Initialization Scripts: motd" groupRelation="or">
+        <TargetFilename condition="contains">/etc/update-motd.d/</TargetFilename>
+    </Rule>
+	
+	
+	    <Rule name="TechniqueID=T1037,TechniqueName=Boot or Logon Initialization Scripts: systemd-generators" groupRelation="or">
+        <TargetFilename condition="contains">/etc/systemd/system-generators/</TargetFilename>
+        <TargetFilename condition="contains">/usr/local/lib/systemd/system-generators/</TargetFilename>
+        <TargetFilename condition="contains">/lib/systemd/system-generators/</TargetFilename>
+        <TargetFilename condition="contains">/usr/lib/systemd/system-generators/</TargetFilename>
+        <TargetFilename condition="contains">/etc/systemd/user-generators/</TargetFilename>
+        <TargetFilename condition="contains">/usr/local/lib/systemd/user-generators/</TargetFilename>
+        <TargetFilename condition="contains">/usr/lib/systemd/user-generators/</TargetFilename>
+    </Rule>
+	
+		
+      </FileCreate>
+    </RuleGroup>
+	
+	
+    <!--Event ID 23 == FileDelete -->
+    <RuleGroup name="" groupRelation="or">
+      <FileDelete onmatch="include" >
+	  
+	  	  <!--  Monitor file deletion at /home & /root directory    -->
+	  
+	  	<Rule name="Monitor /home and /root Directory" groupRelation="or">
+        <TargetFilename condition="contains">/home;/root</TargetFilename>
+    </Rule>
+	
+	
+	<!-- Indicator Removal -T1070   -->
+	
+	
+	<Rule name="TechniqueID=T1070.003  ,TechniqueName=Indicator Removal: Clear Command History" groupRelation="or">
+	<TargetFilename condition="contains">/.bash_history</TargetFilename>
+	</Rule>
+	
+	
+	<Rule name="TechniqueID=T1685.006 ,TechniqueName=Disable or Modify Tools: Clear Linux or Mac System Logs" groupRelation="or">
+
+    <TargetFilename condition="contains">/var/log</TargetFilename>
+        </Rule>
+	  
+	  
+	  
+	  <!--    Data Destruction     -T1485    -->
+	  
+	<Rule name="TechniqueID=T1485 ,TechniqueName=Data Destruction" groupRelation="or">
+	<TargetFilename condition="contains any">/etc/;/boot</TargetFilename>
+	</Rule>
+	  
+	  
+	  	<!-- Account Manipulation: SSH Authorized Keys  -T1098.004 -->
+		
+	<Rule name="TechniqueID=T1098.004 ,TechniqueName=Account Manipulation: SSH Authorized Keys" groupRelation="and">
+
+	<TargetFilename condition="contains any">/etc/ssh/;~/.ssh/</TargetFilename>
+     </Rule>
+	 
+	 
+	  <!-- Service Stop   -T1489  -->
+		
+	<Rule name="TechniqueID=T1489 ,TechniqueName=Service Stop" groupRelation="and">
+
+	<TargetFilename condition="end with">.service</TargetFilename>
+     </Rule>
+	 
+	 
+	 
+	 
+	 <!-- Defense Impairment    -TA0112 -->
+	<Rule name="TechniqueID=TA0112 ,TechniqueName=Defense Impairment" groupRelation="and">
+
+	<TargetFilename condition="contains any">/etc/init.d/;/etc/rc.d/</TargetFilename>
+     </Rule>
+	 
+	<Rule name="TechniqueID=TA0112 ,TechniqueName=Defense Impairment  " groupRelation="and">
+
+	<TargetFilename condition="contains">/etc/cron</TargetFilename>
+     </Rule>
+	  
+	  
+	  
+	  
+	  
+	  </FileDelete>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>
